@@ -24,6 +24,31 @@
             margin-bottom: 20px;
         }
 
+        #controls {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            padding: 10px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #fff;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1;
+            min-width: 48px;
+        }
+
+        .control-btn:hover {
+            background-color: #eef2ff;
+        }
+
         #playlist {
             width: 100%;
             max-width: 600px;
@@ -57,6 +82,12 @@
             background-color: #e0e7ff;
         }
 
+        .playlist-item.playing {
+            background-color: #dbeafe;
+            border-color: #60a5fa;
+            font-weight: 600;
+        }
+
         #error-message {
             color: #dc2626;
             margin-top: 20px;
@@ -81,13 +112,56 @@
 <!-- Or if you want a more recent canary version -->
 <!-- <script src="https://cdn.jsdelivr.net/npm/hls.js@canary"></script> -->
 <video id="video" controls></video>
+<div id="controls">
+    <button id="prev-btn" class="control-btn" type="button" aria-label="Previous">⏮</button>
+    <button id="play-pause-btn" class="control-btn" type="button" aria-label="Play">▶</button>
+    <button id="next-btn" class="control-btn" type="button" aria-label="Next">⏭</button>
+</div>
 <div id="playlist">
     <div id="playlist-items">
     </div>
 </div>
 <div id="error-message"></div>
 <script>
+    let currentPlayingItem = null;
+    let currentTrackIndex = -1;
+    let playlistItems = [];
+
+    const playPauseBtn = document.getElementById("play-pause-btn");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function setPlayingItem(div) {
+        if (currentPlayingItem) {
+            currentPlayingItem.classList.remove("playing");
+        }
+        currentPlayingItem = div;
+        currentPlayingItem.classList.add("playing");
+
+        currentTrackIndex = playlistItems.indexOf(div);
+    }
+
+    function updatePlayPauseButton() {
+        playPauseBtn.textContent = video.paused ? "▶" : "⏸";
+        playPauseBtn.setAttribute("aria-label", video.paused ? "Play" : "Pause");
+    }
+
+    function play_track_by_index(index) {
+        if (playlistItems.length === 0) {
+            return;
+        }
+        if (index < 0) {
+            index = playlistItems.length - 1;
+        }
+        if (index >= playlistItems.length) {
+            index = 0;
+        }
+        play_track(playlistItems[index]);
+    }
+
     function play_track(div) {
+        setPlayingItem(div);
+
         if(Hls.isSupported()) {
             // var hls = new Hls();
             const time = new Date().getTime();
@@ -95,9 +169,11 @@
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED,function() {
                 video.play();
+                updatePlayPauseButton();
             });
             hls.on(Hls.Events.MEDIA_ATTACHED, function () {
                 video.play();
+                updatePlayPauseButton();
             });
         }
             // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
@@ -110,6 +186,7 @@
             video.src = '/track/' + div.dataset.track_id + '?' + time;
             video.addEventListener('loadedmetadata',function() {
                 video.play();
+                updatePlayPauseButton();
             });
         }
     }
@@ -153,6 +230,7 @@
                     play_track(div);
                 }
                 playlist.appendChild(div);
+                playlistItems.push(div);
                 i++;
             });
         })
@@ -161,6 +239,38 @@
                 "Cannot Download Restricted Content!";
         });
     var video = document.getElementById('video');
+
+    playPauseBtn.addEventListener("click", () => {
+        if (video.paused) {
+            if (currentTrackIndex === -1) {
+                play_track_by_index(0);
+                return;
+            }
+            video.play();
+        } else {
+            video.pause();
+        }
+        updatePlayPauseButton();
+    });
+
+    prevBtn.addEventListener("click", () => {
+        if (playlistItems.length === 0) {
+            return;
+        }
+        const targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex - 1;
+        play_track_by_index(targetIndex);
+    });
+
+    nextBtn.addEventListener("click", () => {
+        if (playlistItems.length === 0) {
+            return;
+        }
+        const targetIndex = currentTrackIndex === -1 ? 0 : currentTrackIndex + 1;
+        play_track_by_index(targetIndex);
+    });
+
+    video.addEventListener("play", updatePlayPauseButton);
+    video.addEventListener("pause", updatePlayPauseButton);
 </script>
 </body>
 </html>
