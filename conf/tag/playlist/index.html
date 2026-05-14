@@ -1,29 +1,76 @@
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist</title>
     <style>
-        @media all and (max-width: 500px) {
-            body {
-                width: 100%;
-            }
-        }
-
-        .playlist-item {
-            padding: 10px;
-            border: 1px solid black;
-            margin-top: 10px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .playlist-item:hover {
-            background-color: lightgray;
-        }
-
         body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 600px;
+            background-color: #000;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        #playlist {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        #playlist-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .playlist-item {
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+            font-size: 16px;
+        }
+
+        .playlist-item:hover {
+            background-color: #eef2ff;
+            border-color: #cbd5e1;
+        }
+
+        .playlist-item:active {
+            transform: scale(0.98);
+            background-color: #e0e7ff;
+        }
+
+        #error-message {
+            color: #dc2626;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .playlist-item {
+                padding: 12px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -58,8 +105,9 @@
             // This is using the built-in support of the plain video element, without using hls.js.
             // Note: it would be more normal to wait on the 'canplay' event below however on Safari (where you are most likely to find built-in HLS support) the video.src URL must be on the user-driven
         // white-list before a 'canplay' event will be emitted; the last video event that can be reliably listened-for when the URL is not on the white-list is 'loadedmetadata'.
-        else if (video.canPlayType('application/vnd.apple.mpegurl') && false) {
-            video.src = 'https://video-dev.github.io/streams/x36xhzz/x36xhzz.m3u8';
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            const time = new Date().getTime();
+            video.src = '/track/' + div.dataset.track_id + '?' + time;
             video.addEventListener('loadedmetadata',function() {
                 video.play();
             });
